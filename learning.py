@@ -3,7 +3,8 @@
 # Travail pratique 1
 # ===========================================================================
 # ===========================================================================
-# Indiquer votre nom ici
+# GBEGAN HUGUES
+# GBEH24279505
 # ===========================================================================
 # ===========================================================================
 
@@ -20,9 +21,10 @@
 
 # la librairie principale pour la gestion des données
 import pandas as pd
-
 # la librairie pour normalizer les données par Z-Score
 from sklearn.preprocessing import StandardScaler
+# la librairie pour diviser les données en deux lots (entrainement et test)
+from sklearn.model_selection import train_test_split
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # - Inclure ici toutes les autres librairies dont vous aurez besoin
@@ -74,9 +76,8 @@ x = x.drop('ferme', axis=1)
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #  - Normaliser les données en utilisant Z-score (StandardScaler dans Scikit-learn)
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-# Votre code ici:
-
+sc = StandardScaler()
+x = sc.fit_transform(x)
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #                      QUESTION 2
@@ -84,9 +85,7 @@ x = x.drop('ferme', axis=1)
 # - Divisez les données en deux lots (entrainement et test)
 # (indiquer dans votre rapport le pourcentage des données de test que vous avez utilisé)
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-# Votre code ici:
-
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #                      QUESTION 3
