@@ -34,7 +34,6 @@
 # ==========================================
 
 # la librairie principale pour la gestion des données
-import numpy as np
 import pandas as pd
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -73,6 +72,38 @@ def convert_time(time_str):
 
 
 
+def get_opening_closing_hours(hours_str):
+
+    hours_str = str(row[day])
+
+    if '-' in hours_str:
+        opening_hours, closing_hours = hours_str.split('-')
+        opening_hours = convert_time(opening_hours)
+        closing_hours = convert_time(closing_hours)
+    else:
+        opening_hours = None
+        closing_hours = None
+
+    return opening_hours, closing_hours
+
+
+def opening_hours_by_day(opening_hours, closing_hours, total_hours):
+    if opening_hours is not None and closing_hours is not None:
+        opening_time = pd.Timestamp(opening_hours.strftime('%H:%M:%S'))
+        closing_time = pd.Timestamp(closing_hours.strftime('%H:%M:%S'))
+        total_hours += pd.to_timedelta((closing_time - opening_time).seconds, unit='s')
+    else:
+        total_hours += pd.to_timedelta(0)
+
+    return total_hours
+
+
+def restaurant_is_open_a_day(day):
+    restaurant_jour = horaires[['restaurant_id', day]].copy()
+    restaurant_jour[day] = restaurant_jour[day].apply(lambda x: 0 if str(x) == 'NaN' or str(x) == '' else 1)
+    # restaurant_jour.loc[restaurant_jour[day] == 1, day] = 1
+    return restaurant_jour
+
 # ==========================================
 # ====CHARGEMENT DES DONNÉES EN MÉMOIRE=====
 # ==========================================
@@ -89,17 +120,17 @@ services = pd.read_csv(data_path + "services.csv", skipinitialspace=True)
 categories = pd.read_csv(data_path + "categories.csv", skipinitialspace=True)
 
 # Imprimer la taille de chaque table de données
-# print("Taille des données:")
-# print("------------------")
-# print("utilisateurs:\t", len(utilisateurs))
-# print("avis:\t\t\t", len(avis))
-# print("conseils:\t\t", len(conseils))
-# print("checkin:\t\t", len(checkin))
-# print("restaurants:\t", len(restaurants))
-# print("horaires:\t\t", len(horaires))
-# print("services:\t\t", len(services))
-# print("categories:\t\t", len(categories))
-# print("------------------")
+print("Taille des données:")
+print("------------------")
+print("utilisateurs:\t", len(utilisateurs))
+print("avis:\t\t\t", len(avis))
+print("conseils:\t\t", len(conseils))
+print("checkin:\t\t", len(checkin))
+print("restaurants:\t", len(restaurants))
+print("horaires:\t\t", len(horaires))
+print("services:\t\t", len(services))
+print("categories:\t\t", len(categories))
+print("------------------")
 
 # ==========================================
 # ==========CALCUL DES FEATURES=============
@@ -146,7 +177,8 @@ features = features.merge(nb_restaurants_zone, on='zone', how='left')
 restaurants_categories_intersection = restaurants[['restaurant_id', 'zone']].merge(categories, on='restaurant_id', how='left')
 zone_categories_intersection_nb = restaurants_categories_intersection.groupby(['zone', 'categorie']).size().reset_index(name='zone_categories_intersection')
 zone_categories_intersection = pd.merge(restaurants_categories_intersection, zone_categories_intersection_nb, on='zone', how='left')
-zone_categories_intersection = zone_categories_intersection.groupby('restaurant_id').sum().reset_index()
+# print(zone_categories_intersection)
+zone_categories_intersection = zone_categories_intersection.groupby('restaurant_id')['zone_categories_intersection'].sum().reset_index()
 features = features.merge(zone_categories_intersection, on='restaurant_id', how='left')
 
 # -----------------------------------------------------------
@@ -156,7 +188,7 @@ features = features.merge(zone_categories_intersection, on='restaurant_id', how=
 restaurants_categories_intersection = restaurants[['restaurant_id', 'ville']].merge(categories, on='restaurant_id', how='left')
 ville_categories_intersection_nb = restaurants_categories_intersection.groupby(['ville', 'categorie']).size().reset_index(name='ville_categories_intersection')
 ville_categories_intersection = pd.merge(restaurants_categories_intersection, ville_categories_intersection_nb, on='ville', how='left')
-ville_categories_intersection = ville_categories_intersection.groupby('restaurant_id').sum().reset_index()
+ville_categories_intersection = ville_categories_intersection.groupby('restaurant_id')['ville_categories_intersection'].sum().reset_index()
 features = features.merge(ville_categories_intersection, on='restaurant_id', how='left')
 
 # -----------------------------------------------------------
@@ -335,104 +367,92 @@ for index, row in horaires.iterrows():
     total_hours = pd.Timedelta(0)
     # Parcourir chaque jour de la semaine
     for day in days:
-        # Extraire les horaires d'ouverture et de fermeture
         hours_str = str(row[day])
         if pd.isna(hours_str):
             total_hours += pd.to_timedelta(0)
 
-        if '-' in hours_str:
-            opening_hours, closing_hours = hours_str.split('-')
-            opening_hours = convert_time(opening_hours)
-            closing_hours = convert_time(closing_hours)
-        else:
-            opening_hours = None
-            closing_hours = None
+        # Extraire les horaires d'ouverture et de fermeture
+        opening_hours, closing_hours = get_opening_closing_hours(hours_str)
             
         # Calculer la durée d'ouverture pour chaque jour
-        if opening_hours is not None and closing_hours is not None:
-            opening_time = pd.Timestamp(opening_hours.strftime('%H:%M:%S'))
-            closing_time = pd.Timestamp(closing_hours.strftime('%H:%M:%S'))
-            total_hours += pd.to_timedelta((closing_time - opening_time).seconds, unit='s')
-        else:
-            total_hours += pd.to_timedelta(0)
+        total_hours += opening_hours_by_day(opening_hours, closing_hours, total_hours)
 
-    nb_heures_ouverture_semaine = pd.DataFrame([[restaurant_id, total_hours.total_seconds() / 3600]], columns=['restaurant_id', 'nb_heures_ouverture_semaine'])
-    heures_semaine.append(nb_heures_ouverture_semaine)
+    heures_semaine.append(total_hours.total_seconds() / 3600)
    
 features['nb_heures_ouverture_semaine'] = heures_semaine
-print("features", features)
 
 # -----------------------------------------------------------
 # 27) ouvert_samedi
 # Si le restaurant est ouvert les samedis (valeur booléenne : 0 ou 1).
 # -----------------------------------------------------------
-
-# Votre code ici:
-
+day = 'samedi'
+ouvert_day = restaurant_is_open_a_day(day)
+features['ouvert_samedi'] = ouvert_day[day]
 
 # -----------------------------------------------------------
 # 28) ouvert_dimanche
 # Si le restaurant est ouvert les dimanches (valeur booléenne : 0 ou 1).
 # -----------------------------------------------------------
-
-# Votre code ici:
-
+day = 'dimanche'
+ouvert_day = restaurant_is_open_a_day(day)
+features['ouvert_dimanche'] = ouvert_day[day]
 
 # -----------------------------------------------------------
 # 29) ouvert_lundi
 # Si le restaurant est ouvert les lundis (valeur booléenne : 0 ou 1).
 # -----------------------------------------------------------
-
-# Votre code ici:
-
+day = 'lundi'
+ouvert_day = restaurant_is_open_a_day(day)
+features['ouvert_lundi'] = ouvert_day[day]
 
 # -----------------------------------------------------------
 # 30) ouvert_vendredi
 # Si le restaurant est ouvert les vendredis (valeur booléenne : 0 ou 1).
 # -----------------------------------------------------------
-
-# Votre code ici:
-
+day = 'vendredi'
+ouvert_day = restaurant_is_open_a_day(day)
+features['ouvert_vendredi'] = ouvert_day[day]
 
 # -----------------------------------------------------------
 # 31) emporter
 # Si le restaurant offre le service à emporter (valeur booléenne : 0 ou 1).
-emporter = services.iloc[:, [0, 1]]
-features = features.merge(emporter, on='restaurant_id', how='left')
+emporters = services[['restaurant_id', 'emporter']]
+features = features.merge(emporters, on='restaurant_id', how='left')
 
 # 32) livraison
 # Si le restaurant offre le service de livraison (valeur booléenne : 0 ou 1).
-livraison = services.iloc[:, [0, 2]]
-features = features.merge(livraison, on='restaurant_id', how='left')
+livraisons = services[['restaurant_id', 'livraison']]
+features = features.merge(livraisons, on='restaurant_id', how='left')
 
 # 33) bon_pour_groupes
 # Si le restaurant est approprié pour les groupes (valeur booléenne : 0 ou 1).
-bon_pour_groupes = services.iloc[:, [0, 3]]
+bon_pour_groupes = services[['restaurant_id', 'bon_pour_groupes']]
 features = features.merge(bon_pour_groupes, on='restaurant_id', how='left')
 
 # 34) bon_pour_enfants
 # Si le restaurant est approprié pour les enfants (valeur booléenne : 0 ou 1).
-bon_pour_enfants = services.iloc[:, [0, 4]]
+bon_pour_enfants = services[['restaurant_id', 'bon_pour_enfants']]
 features = features.merge(bon_pour_enfants, on='restaurant_id', how='left')
 
 # 35) reservation
 # Si on a besoin de faire une réservation au restaurant (valeur booléenne : 0 ou 1).
-reservation = services.iloc[:, [0, 5]]
-features = features.merge(reservation, on='restaurant_id', how='left')
+reservations = services[['restaurant_id', 'reservation']]
+features = features.merge(reservations, on='restaurant_id', how='left')
 
 # 36) prix
 # Le niveau de prix du restaurant. Il existe trois niveaux, 1 (abordable), 2 (moyen) et 3 (coûteux).
 prix_niveaux = {0: '', 1: 'abordable', 2: 'moyen', 3: 'coûteux', 4: 'coûteux'}
-restaurants_prix = services[['restaurant_id', 'prix']]
+restaurants_prix = services[['restaurant_id', 'prix']].copy()
 restaurants_prix['prix'] = restaurants_prix['prix'].apply(lambda x: prix_niveaux[x])
 features = features.merge(restaurants_prix, on='restaurant_id', how='left')
 
 # 37) terrasse
 # Si le restaurant a une terrasse (valeur booléenne : 0 ou 1).
 # -----------------------------------------------------------
-terrasse = services.iloc[:, [0, 7]]
-features = features.merge(terrasse, on='restaurant_id', how='left')
-# print("features", features)
+terrasses = services[['restaurant_id', 'terrasse']]
+features = features.merge(terrasses, on='restaurant_id', how='left')
+
 # -----------------------------------------------------------
 # Sauvegarder l'ensemble de données dans un fichier csv afin d'être utilisé dans l'étape suivante
-# features.to_csv("donnees/features.csv", index=False)
+print('features created .......')
+features.to_csv("donnees/features.csv", index=False)
