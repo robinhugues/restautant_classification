@@ -116,6 +116,8 @@ features['ville'] = features.ville.cat.codes
 features.zone = pd.Categorical(features.zone)
 features['zone'] = features.zone.cat.codes
 
+features.prix = pd.Categorical(features.prix)
+features['prix'] = features.prix.cat.codes
 # -----------------------------------------------------------
 # Elimination de la colonne identifiante (ID): restaurant_id
 print("------------------------")

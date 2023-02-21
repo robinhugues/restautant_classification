@@ -20,6 +20,7 @@
 # ==========================================
 
 # la librairie principale pour la gestion des données
+import numpy as np
 import pandas as pd
 # la librairie pour normalizer les données par Z-Score
 from sklearn.preprocessing import StandardScaler
@@ -49,8 +50,22 @@ data_path = "donnees/"
 # - Inclure ici toutes les autres variables globales dont vous aurez besoin
 # - Écrivez en commentaire le rôle de chaque variable
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+def ececuter_entrainement(x_test, y_test):
+    y_pred_dtc = dtc.predict(x_test)
+    from sklearn.metrics import confusion_matrix, f1_score, roc_auc_score
+    # Matrice de confusion
+    cm_dtc = confusion_matrix(y_test, y_pred_dtc)
+    TN, FP, FN, TP = confusion_matrix(y_test, y_pred_dtc).ravel()
+    # true positive rate
+    TPR = TP/(TP+FN)
+    # false positive rate
+    FPR = FP/(FP+TN)
+    # F-measure
+    f1_dtc = f1_score(y_test, y_pred_dtc, average='macro')
+    # AUC
+    roc_dtc = roc_auc_score(y_test, y_pred_dtc)
 
-# Votre code ici:
+    return cm_dtc, TPR, FPR, f1_dtc, roc_dtc
 
 
 # ==========================================
@@ -97,8 +112,31 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_
 #   4 - Bagging
 #   5 - AdaBoost
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# 1 - Arbre de decision
+from sklearn.tree import DecisionTreeClassifier
+dtc = DecisionTreeClassifier()
+dtc.fit(x_train, y_train)
 
-# Votre code ici:
+# 2 - Forêt d’arbres décisionnels (Random Forest)
+from sklearn.ensemble import RandomForestClassifier
+rfc = RandomForestClassifier()
+rfc.fit(x_train, y_train)
+
+# 3 - Classification bayésienne naïve
+from sklearn.naive_bayes import GaussianNB
+gnb = GaussianNB()
+gnb.fit(x_train, y_train)
+
+# 4 - Bagging
+from sklearn.ensemble import BaggingClassifier
+bagging = BaggingClassifier()
+bagging.fit(x_train, y_train)
+
+# 5 - AdaBoost
+from sklearn.ensemble import AdaBoostClassifier
+adaboost = AdaBoostClassifier()
+adaboost.fit(x_train, y_train)
+
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -111,8 +149,26 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_
 #   4- La surface sous la courbe ROC (AUC).
 #   5- La matrice de confusion.
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# 1 - Arbre de decision
+cm_dtc, TPR, FPR, f1_dtc, roc_dtc = ececuter_entrainement(x_test, y_test)
+print("1 - Arbre de decision ----- Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_dtc, TPR, FPR, f1_dtc, roc_dtc)
 
-# Votre code ici:
+# 2 - Forêt d’arbres décisionnels (Random Forest)
+cm_rfc, TPR, FPR, f1_rfc, roc_rfc = ececuter_entrainement(x_test, y_test)
+print("2 - Random Forest ------ Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_rfc, TPR, FPR, f1_rfc, roc_rfc)
+
+# 3 - Classification bayésienne naïve
+cm_gnb, TPR, FPR, f1_gnb, roc_gnb = ececuter_entrainement(x_test, y_test)
+print("3 - Classification bayésienne naïve ------ Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_gnb, TPR, FPR, f1_gnb, roc_gnb)
+
+# 4 - Bagging
+cm_bagging, TPR, FPR, f1_bagging, roc_bagging = ececuter_entrainement(x_test, y_test)
+print("4 - Bagging ------ Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_bagging, TPR, FPR, f1_bagging, roc_bagging)
+
+# 5 - AdaBoost
+cm_adaboost, TPR, FPR, f1_adaboost, roc_adaboost = ececuter_entrainement(x_test, y_test)
+print("5 - AdaBoost --------- Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_adaboost, TPR, FPR, f1_adaboost, roc_adaboost)
+
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
