@@ -71,7 +71,7 @@ def convert_time(time_str):
         return pd.to_datetime(time_str, format='%H:%M', errors='coerce').time()
 
 
-
+# Fonction pour récupérer les heures d'ouverture et de fermeture
 def get_opening_closing_hours(hours_str):
 
     hours_str = str(row[day])
@@ -87,6 +87,7 @@ def get_opening_closing_hours(hours_str):
     return opening_hours, closing_hours
 
 
+# Fonction pour calculer le nombre d'heures d'ouverture par jour
 def opening_hours_by_day(opening_hours, closing_hours, total_hours):
     if opening_hours is not None and closing_hours is not None:
         opening_time = pd.Timestamp(opening_hours.strftime('%H:%M:%S'))
@@ -98,6 +99,7 @@ def opening_hours_by_day(opening_hours, closing_hours, total_hours):
     return total_hours
 
 
+# Fonction qui détermine si un restaurant est ouvert un jour donné
 def restaurant_is_open_a_day(day):
     restaurant_jour = horaires[['restaurant_id', day]].copy()
     restaurant_jour[day] = restaurant_jour[day].apply(lambda x: 0 if str(x) == 'NaN' or str(x) == '' else 1)

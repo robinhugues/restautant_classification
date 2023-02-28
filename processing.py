@@ -97,7 +97,6 @@ features[champs_remplacement_moyenne] = features[champs_remplacement_moyenne].fi
 # Remplacement des valeurs manquantes des niveaux de prix par inconnu
 features[['prix']] = features[['prix']].fillna(value='inconnu')
 
-print('f',features)
 print(features.isnull().sum())
 
 

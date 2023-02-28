@@ -28,7 +28,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 # la libraairie pour entrainer les modèles de classification
 from sklearn.metrics import confusion_matrix, f1_score, roc_auc_score
-
 # la librairie pour tracer les graphiques et les courbes ROC et AUC
 import matplotlib.pyplot as plt
 
@@ -165,6 +164,11 @@ adaboost.fit(x_train, y_train)
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # 1 - Arbre de decision
 cm_dtc, TPR_dtc, FPR_dtc, f1_dtc, roc_dtc = evaluate_models(dtc, x_test, y_test)
+import scikitplot as skplt
+# afficher les courbes ROC
+skplt.metrics.plot_roc(y_test, dtc.predict_proba(x_test))
+plt.show()
+
 print("Arbre de decision ----- Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_dtc, TPR_dtc, FPR_dtc, f1_dtc, roc_dtc)
 
 # 2 - Forêt d’arbres décisionnels (Random Forest)
