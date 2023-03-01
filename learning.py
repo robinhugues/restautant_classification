@@ -30,6 +30,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, f1_score, roc_auc_score
 # la librairie pour tracer les graphiques et les courbes ROC et AUC
 import matplotlib.pyplot as plt
+import scikitplot as skplt
+
+# la librairie pour selectionner les features les plus pertinentes
+from sklearn.feature_selection import SelectKBest, mutual_info_classif
+
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -164,30 +169,40 @@ adaboost.fit(x_train, y_train)
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # 1 - Arbre de decision
 cm_dtc, TPR_dtc, FPR_dtc, f1_dtc, roc_dtc = evaluate_models(dtc, x_test, y_test)
-import scikitplot as skplt
-# afficher les courbes ROC
-skplt.metrics.plot_roc(y_test, dtc.predict_proba(x_test))
-plt.show()
-
-print("Arbre de decision ----- Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_dtc, TPR_dtc, FPR_dtc, f1_dtc, roc_dtc)
+print("Arbre de decision -------------")
+# skplt.metrics.plot_roc(y_test, dtc.predict_proba(x_test))
+# skplt.metrics.plot_confusion_matrix(y_test, dtc.predict(x_test))
+print("Arbre de decision ----- TP Rate, FP Rate, F-measure, AUC : ", TPR_dtc, FPR_dtc, f1_dtc, roc_dtc)
 
 # 2 - Forêt d’arbres décisionnels (Random Forest)
+print("Random Forest -------------")
 cm_rf, TPR_rf, FPR_rf, f1_rf, roc_rf = evaluate_models(rfc, x_test, y_test)
-print("Random Forest ----------- Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_rf, TPR_rf, FPR_rf, f1_rf, roc_rf)
+# skplt.metrics.plot_roc(y_test, rfc.predict_proba(x_test))
+# skplt.metrics.plot_confusion_matrix(y_test, rfc.predict(x_test))
+print("Random Forest -----------TP Rate, FP Rate, F-measure, AUC: ", TPR_rf, FPR_rf, f1_rf, roc_rf)
 
-# 3 - Classification bayésienne naïve   
+# 3 - Classification bayésienne naïve 
+print("Classification bayésienne naïve----- ")  
 cm_gnb, TPR_gnb, FPR_gnb, f1_gnb, roc_gnb = evaluate_models(gnb, x_test, y_test)
-print("Classification bayésienne naïve----- Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_gnb, TPR_gnb, FPR_gnb, f1_gnb, roc_gnb)
+skplt.metrics.plot_roc(y_test, gnb.predict_proba(x_test))
+skplt.metrics.plot_confusion_matrix(y_test, gnb.predict(x_test))
+print("Classification bayésienne naïve----- TP Rate, FP Rate, F-measure, AUC: ", TPR_gnb, FPR_gnb, f1_gnb, roc_gnb)
 
 # 4 - Bagging
+print("Bagging ----------- ")
 cm_bagging, TPR_bagging, FPR_bagging, f1_bagging, roc_bagging = evaluate_models(bagging, x_test, y_test)
-print("Bagging ----------- Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_bagging, TPR_bagging, FPR_bagging, f1_bagging, roc_bagging)
+skplt.metrics.plot_roc(y_test, bagging.predict_proba(x_test))
+skplt.metrics.plot_confusion_matrix(y_test, bagging.predict(x_test))
+print("Bagging ----------- TP Rate, FP Rate, F-measure, AUC: ", TPR_bagging, FPR_bagging, f1_bagging, roc_bagging)
 
 # 5 - AdaBoost
+print("AdaBoost ----------- ")
 cm_adaboost, TPR_adaboost, FPR_adaboost, f1_adaboost, roc_adaboost = evaluate_models(adaboost, x_test, y_test)
-print("AdaBoost ----------- Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_adaboost, TPR_adaboost, FPR_adaboost, f1_adaboost, roc_adaboost)
+skplt.metrics.plot_roc(y_test, adaboost.predict_proba(x_test))
+skplt.metrics.plot_confusion_matrix(y_test, adaboost.predict(x_test))
+print("AdaBoost ----------- TP Rate, FP Rate, F-measure, AUC: ", cm_adaboost, TPR_adaboost, FPR_adaboost, f1_adaboost, roc_adaboost)
 
-
+# plt.show()
 print(' >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #                      QUESTION 5
@@ -197,12 +212,17 @@ print(' >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
 # Vous devez identifier les 10 meilleurs features en utilisant la mesure du Gain d’information (Mutual Info dans scikit-learn).
 # Afficher les 10 meilleurs features dans un tableau (par ordre croissant selon le score obtenu par le Gain d'information).
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-from sklearn.feature_selection import SelectKBest, mutual_info_classif
 selector = SelectKBest(mutual_info_classif, k=10)
 sel = selector.fit(x_train, y_train)
 cols = selector.get_support(indices=True)
 kbest = list(map(lambda x: x_names[x],cols))
 print('t10', kbest)
+# afficher les 10 meilleurs features dans un graphe par ordre croissant selon le score obtenu par le Gain d'information
+plt.figure(figsize=(10, 5))
+plt.barh(kbest, sel.scores_[cols])
+plt.title('Top 10 features')
+plt.show()
+
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #                      QUESTION 6
