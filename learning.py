@@ -26,7 +26,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 # la librairie pour diviser les données en deux lots (entrainement et test)
 from sklearn.model_selection import train_test_split
-# la libraairie pour entrainer les modèles de classification
+# la librairie pour entrainer les modèles de classification
 from sklearn.metrics import confusion_matrix, f1_score, roc_auc_score
 # la librairie pour tracer les graphiques et les courbes ROC et AUC
 import matplotlib.pyplot as plt
@@ -169,40 +169,34 @@ adaboost.fit(x_train, y_train)
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # 1 - Arbre de decision
 cm_dtc, TPR_dtc, FPR_dtc, f1_dtc, roc_dtc = evaluate_models(dtc, x_test, y_test)
-print("Arbre de decision -------------")
-# skplt.metrics.plot_roc(y_test, dtc.predict_proba(x_test))
-# skplt.metrics.plot_confusion_matrix(y_test, dtc.predict(x_test))
+skplt.metrics.plot_roc(y_test, dtc.predict_proba(x_test))
+skplt.metrics.plot_confusion_matrix(y_test, dtc.predict(x_test))
 print("Arbre de decision ----- TP Rate, FP Rate, F-measure, AUC : ", TPR_dtc, FPR_dtc, f1_dtc, roc_dtc)
 
 # 2 - Forêt d’arbres décisionnels (Random Forest)
-print("Random Forest -------------")
 cm_rf, TPR_rf, FPR_rf, f1_rf, roc_rf = evaluate_models(rfc, x_test, y_test)
-# skplt.metrics.plot_roc(y_test, rfc.predict_proba(x_test))
-# skplt.metrics.plot_confusion_matrix(y_test, rfc.predict(x_test))
+skplt.metrics.plot_roc(y_test, rfc.predict_proba(x_test))
+skplt.metrics.plot_confusion_matrix(y_test, rfc.predict(x_test))
 print("Random Forest -----------TP Rate, FP Rate, F-measure, AUC: ", TPR_rf, FPR_rf, f1_rf, roc_rf)
 
-# 3 - Classification bayésienne naïve 
-print("Classification bayésienne naïve----- ")  
+# 3 - Classification bayésienne naïve  
 cm_gnb, TPR_gnb, FPR_gnb, f1_gnb, roc_gnb = evaluate_models(gnb, x_test, y_test)
 skplt.metrics.plot_roc(y_test, gnb.predict_proba(x_test))
 skplt.metrics.plot_confusion_matrix(y_test, gnb.predict(x_test))
 print("Classification bayésienne naïve----- TP Rate, FP Rate, F-measure, AUC: ", TPR_gnb, FPR_gnb, f1_gnb, roc_gnb)
 
 # 4 - Bagging
-print("Bagging ----------- ")
 cm_bagging, TPR_bagging, FPR_bagging, f1_bagging, roc_bagging = evaluate_models(bagging, x_test, y_test)
 skplt.metrics.plot_roc(y_test, bagging.predict_proba(x_test))
 skplt.metrics.plot_confusion_matrix(y_test, bagging.predict(x_test))
 print("Bagging ----------- TP Rate, FP Rate, F-measure, AUC: ", TPR_bagging, FPR_bagging, f1_bagging, roc_bagging)
 
 # 5 - AdaBoost
-print("AdaBoost ----------- ")
 cm_adaboost, TPR_adaboost, FPR_adaboost, f1_adaboost, roc_adaboost = evaluate_models(adaboost, x_test, y_test)
 skplt.metrics.plot_roc(y_test, adaboost.predict_proba(x_test))
 skplt.metrics.plot_confusion_matrix(y_test, adaboost.predict(x_test))
-print("AdaBoost ----------- TP Rate, FP Rate, F-measure, AUC: ", cm_adaboost, TPR_adaboost, FPR_adaboost, f1_adaboost, roc_adaboost)
+print("AdaBoost ----------- TP Rate, FP Rate, F-measure, AUC: ", TPR_adaboost, FPR_adaboost, f1_adaboost, roc_adaboost)
 
-# plt.show()
 print(' >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #                      QUESTION 5
@@ -212,18 +206,37 @@ print(' >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
 # Vous devez identifier les 10 meilleurs features en utilisant la mesure du Gain d’information (Mutual Info dans scikit-learn).
 # Afficher les 10 meilleurs features dans un tableau (par ordre croissant selon le score obtenu par le Gain d'information).
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+# cols = mutual_info_classif(x_train, y_train, discrete_features=True)
+# top_10_features = pd.DataFrame(cols, index=x_names, columns=['score'])
+# t10_f = top_10_features.sort_values(by='score', ascending=False).head(10)
+# print('t10_f', t10_f)
+# plt.figure(figsize=(10, 5))
+# plt.barh(t10_f.index.tolist(), t10_f['score'])
+# plt.title('Top 10 features')
+
+# x_train_reduced = x_train[:, cols.astype(int)]
+# x_test_reduced = x_test[:, cols.astype(int)]
+
+
+# deuxieme methode avec selectKbest
 selector = SelectKBest(mutual_info_classif, k=10)
 sel = selector.fit(x_train, y_train)
 cols = selector.get_support(indices=True)
-kbest = list(map(lambda x: x_names[x],cols))
-print('t10', kbest)
-# afficher les 10 meilleurs features dans un graphe par ordre croissant selon le score obtenu par le Gain d'information
+cols_with_name = pd.DataFrame(sel.scores_, index=x_names, columns=['score'])
+kbest = cols_with_name.sort_values(by='score', ascending=False).head(10)
+print('kbest', kbest)
 plt.figure(figsize=(10, 5))
-plt.barh(kbest, sel.scores_[cols])
+plt.barh(kbest.index.tolist(), kbest['score'])
 plt.title('Top 10 features')
-plt.show()
 
+x_train_reduced = x_train[:, cols]
+x_test_reduced = x_test[:, cols]
 
+# plt.show()
+# # On a pas les memes resultats avec les deux methodes
+
+print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #                      QUESTION 6
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -234,9 +247,6 @@ plt.show()
 #   4 - Bagging
 #   5 - AdaBoost
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-x_train_reduced = x_train[:, cols]
-x_test_reduced = x_test[:, cols]
 
 # 1 - Arbre de decision
 from sklearn.tree import DecisionTreeClassifier
@@ -275,20 +285,37 @@ adaboost_t10.fit(x_train_reduced, y_train)
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # 1 - Arbre de decision
 cm_dtc, TPR_dtc, FPR_dtc, f1_dtc, roc_dtc = evaluate_models(dtc_t10, x_test_reduced, y_test)
-print("1 - Arbre de decision ----- Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_dtc, TPR_dtc, FPR_dtc, f1_dtc, roc_dtc)
+skplt.metrics.plot_roc(y_test, dtc_t10.predict_proba(x_test_reduced))
+skplt.metrics.plot_confusion_matrix(y_test, dtc_t10.predict(x_test_reduced))
+plt.title('Top 10 Arbre de decision')
+print("top_10_features Arbre de decision --------- TP Rate, FP Rate, F-measure, AUC: ", TPR_dtc, FPR_dtc, f1_dtc, roc_dtc)
 
 # 2 - Forêt d’arbres décisionnels (Random Forest)
 cm_rf, TPR_rf, FPR_rf, f1_rf, roc_rf = evaluate_models(rfc_t10, x_test_reduced, y_test)
-print("Random Forest ----------- Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_rf, TPR_rf, FPR_rf, f1_rf, roc_rf)
+skplt.metrics.plot_roc(y_test, rfc_t10.predict_proba(x_test_reduced))
+skplt.metrics.plot_confusion_matrix(y_test, rfc_t10.predict(x_test_reduced))
+plt.title('Top 10 Random Forest')
+print("top_10_features Random Forest ----------- TP Rate, FP Rate, F-measure, AUC: ", TPR_rf, FPR_rf, f1_rf, roc_rf)
 
 # 3 - Classification bayésienne naïve   
 cm_gnb, TPR_gnb, FPR_gnb, f1_gnb, roc_gnb = evaluate_models(gnb_t10, x_test_reduced, y_test)
-print("Classification bayésienne naïve----- Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_gnb, TPR_gnb, FPR_gnb, f1_gnb, roc_gnb)
+skplt.metrics.plot_roc(y_test, gnb_t10.predict_proba(x_test_reduced))
+skplt.metrics.plot_confusion_matrix(y_test, gnb_t10.predict(x_test_reduced))
+plt.title('Top 10 Classification bayésienne naïve')
+print("top_10_features Classification bayésienne naïve----- TP Rate, FP Rate, F-measure, AUC: ", TPR_gnb, FPR_gnb, f1_gnb, roc_gnb)
 
 # 4 - Bagging
 cm_bagging, TPR_bagging, FPR_bagging, f1_bagging, roc_bagging = evaluate_models(bagging_t10, x_test_reduced, y_test)
-print("Bagging ----------- Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_bagging, TPR_bagging, FPR_bagging, f1_bagging, roc_bagging)
+skplt.metrics.plot_roc(y_test, bagging_t10.predict_proba(x_test_reduced))
+skplt.metrics.plot_confusion_matrix(y_test, bagging_t10.predict(x_test_reduced))
+plt.title('Top 10 Bagging')
+print("top_10_features Bagging ----------- TP Rate, FP Rate, F-measure, AUC: ", TPR_bagging, FPR_bagging, f1_bagging, roc_bagging)
 
 # 5 - AdaBoost
 cm_adaboost, TPR_adaboost, FPR_adaboost, f1_adaboost, roc_adaboost = evaluate_models(adaboost_t10, x_test_reduced, y_test)
-print("AdaBoost ----------- Matrice de confusion,  TP Rate, FP Rate, F-measure, AUC: ", cm_adaboost, TPR_adaboost, FPR_adaboost, f1_adaboost, roc_adaboost)
+skplt.metrics.plot_roc(y_test, adaboost_t10.predict_proba(x_test_reduced))
+skplt.metrics.plot_confusion_matrix(y_test, adaboost_t10.predict(x_test_reduced))
+plt.title('Top 10 AdaBoost')
+print("top_10_features AdaBoost -----------  TP Rate, FP Rate, F-measure, AUC: ", TPR_adaboost, FPR_adaboost, f1_adaboost, roc_adaboost)
+
+plt.show()
