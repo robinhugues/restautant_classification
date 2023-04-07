@@ -278,7 +278,7 @@ features = features.merge(nb_avis_favorables_mention, on='restaurant_id', how='l
 # 16) nb_avis_defavorables_mention
 # Le nombre total d'avis qui ont reçu au moins une mention "useful" ou "funny" ou "cool" ET le nombre d'étoiles de l'avis est <3.
 # -----------------------------------------------------------
-nb_avis_defavorables_mention = avis[(avis.etoiles < 3) & (avis.useful > 0) | (avis.funny > 0) | (avis.cool > 0)].groupby('restaurant_id').size().reset_index(name='nb_avis_defavorables_mention')
+nb_avis_defavorables_mention = avis[(avis.etoiles < 3) & ((avis.useful > 0) | (avis.funny > 0) | (avis.cool > 0))].groupby('restaurant_id').size().reset_index(name='nb_avis_defavorables_mention')
 features = features.merge(nb_avis_defavorables_mention, on='restaurant_id', how='left')
 
 # -----------------------------------------------------------
